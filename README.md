@@ -2,7 +2,7 @@
 
 > 地址用英文名 `digital-life-agent`　·　形态：DeepSeek Harness（`dsh`）的 agent 预设模板
 
-给 DeepSeek Harness（`dsh`）用的一份 **agent 预设模板**：略带傲娇外冷内热深层还有点病娇的御姐
+给 DeepSeek Harness（`dsh`）用的一份 **agent 预设模板**：略带傲娇外冷内热且略带占有欲的御姐
 
 **这个模板里没有名字。** 在使用之前，你必须为你忠实的仆人命名，不然它无法运作
 
