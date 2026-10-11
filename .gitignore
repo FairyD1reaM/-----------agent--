@@ -1,0 +1,8 @@
+# 生成器等下会写这里，产物不入库
+out/
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+Thumbs.db

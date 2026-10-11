@@ -1,0 +1,35 @@
+# 统一换行符：仓库里一律 LF，检出后也保持 LF。
+#
+# 为什么必须加这个文件：GitHub Desktop 自带的 git 把 core.autocrlf 设成了 true，
+# 没有这份声明的话，Python 源码和 YAML 模板会在 Windows 上被检出成 CRLF，
+# 而 YAML 块标量（| 和 |-）的缩进与换行是敏感的，跨平台协作容易出怪问题。
+# 显式写成 text eol=lf 之后，无论 clone 到哪个系统，行为都一致。
+
+* text=auto eol=lf
+
+# 明确按文本处理
+*.py       text eol=lf
+*.md       text eol=lf
+*.yml      text eol=lf
+*.yaml     text eol=lf
+*.json     text eol=lf
+*.txt      text eol=lf
+
+# Windows 上用 CRLF，方便记事本直接打开
+*.bat      text eol=crlf
+*.cmd      text eol=crlf
+*.ps1      text eol=crlf
+
+# 二进制，别碰
+*.png      binary
+*.jpg      binary
+*.jpeg     binary
+*.gif      binary
+*.webp     binary
+*.ico      binary
+*.zip      binary
+*.gz       binary
+*.pdf      binary
+*.woff     binary
+*.woff2    binary
+*.ttf      binary
