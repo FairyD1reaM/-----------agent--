@@ -62,7 +62,9 @@ def read_name_interactive() -> tuple[str, str]:
 
 
 def render(name: str, short: str) -> str:
-    text = TEMPLATE.read_text(encoding="utf-8")
+    # utf-8-sig：模板若被 Windows 编辑器存成带 BOM 的 UTF-8，BOM 会成为第一个字符
+    # （'\ufeff'），出现在产物开头，导致 YAML 解析器把首行当成乱码。统一剥掉再渲染。
+    text = TEMPLATE.read_text(encoding="utf-8-sig")
     for tok in TOKENS:
         if tok not in text:
             fail(f"模板缺少占位符 {tok}，模板文件可能被改坏了。")
@@ -70,11 +72,13 @@ def render(name: str, short: str) -> str:
     leftover = [t for t in TOKENS if t in text]
     if leftover:
         fail(f"渲染后仍残留占位符：{leftover}")
+    if text.startswith("\ufeff"):
+        text = text.lstrip("\ufeff")
     return text
 
 
 def validate_yaml(text: str) -> None:
-    """尽量用真 YAML 解析器校验；没有 pyyaml 就退化成缩进/结构检查。"""
+    """尽量用真 YAML 解析器校验；没有 pyyaml 就退化成结构检查。"""
     try:
         import yaml  # type: ignore
     except Exception:
@@ -82,11 +86,11 @@ def validate_yaml(text: str) -> None:
         return
     try:
         data = yaml.safe_load(text)
+        row = data[0]["insert"][0]
     except Exception as exc:  # noqa: BLE001
         fail(f"渲染结果不是合法 YAML：{exc}")
-    row = data[0]["insert"][0]
     if row["id"] != PRESET_ROW_ID:
-        fail(f"声明行 id 不对：{row['id']}")
+        fail(f"声明行 id 不对：{row.get('id')!r}")
     plugins = row["config"]["plugins"]
     if not plugins or plugins[0]["id"] != "persona":
         fail("persona 必须是第一个插件行。")
@@ -99,11 +103,19 @@ def validate_yaml(text: str) -> None:
 def _validate_loose(text: str) -> None:
     if "\t" in text:
         fail("渲染结果含 Tab 字符，YAML 不允许用 Tab 缩进。")
-    if not text.startswith("- insert:"):
-        fail("渲染结果不是以 `- insert:` 开头。")
-    if "{{" in text or "}}" in text:
+    # 注意：模板/产物开头是若干行 # 注释，`- insert:` 在其后。所以只能查"包含"，
+    # 不能用 startswith —— 之前写成 startswith 时，任何没装 pyyaml 的环境都会误报。
+    if "- insert:" not in text:
+        fail(
+            "渲染结果里找不到 `- insert:`。\n"
+            f"  实际开头是：{text[:40]!r}\n"
+            "  模板文件可能被截断，或首行被编辑器/下载工具改动了。"
+        )
+    # 只查本项目自己的占位符。产物里的 {{cwd}} 是 dsh 的模板变量，必须原样保留，
+    # 不能被当成"未替换"。
+    if any(tok in text for tok in TOKENS):
         fail("渲染结果里还有未替换的花括号占位符。")
-    print("  YAML 校验：pyyaml 不可用，已退化为结构检查")
+    print("  YAML 校验：pyyaml 不可用，已退化为结构检查（建议 pip install pyyaml 做完整校验）")
 
 
 def write_bundle(out: Path, rendered: str) -> Path:
